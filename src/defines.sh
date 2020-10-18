@@ -1,4 +1,4 @@
-VERSION="0.2.4"
+VERSION="0.3.0"
 
 BASE_API="https://corona.lmao.ninja"
 API_TOTAL_ENDPOINT="$BASE_API/v3/covid-19/all"

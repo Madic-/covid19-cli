@@ -6,15 +6,19 @@
 # Copyright (c) 2020 Garry Lachman
 # https://github.com/garrylachman/covid19-cli
 
-LC_NUMERIC=en_US
+if [ -z "$LC_NUMERIC" ]; then LC_NUMERIC=en_US.UTF-8; fi
 
-basedir=$( cd `dirname $0`; pwd )
+basedir=$(
+  cd "$(dirname "$0")" || exit
+  pwd
+)
 
-source ${basedir}/defines.sh
+# shellcheck source=./defines.sh
+source "${basedir}"/defines.sh
 
-. ${basedir}/libs/tables.sh
-. ${basedir}/libs/progress.sh
-. ${basedir}/libs/sparkline.sh
+. "${basedir}"/libs/tables.sh
+. "${basedir}"/libs/progress.sh
+. "${basedir}"/libs/sparkline.sh
 
 # Detect whether output is piped or not.
 [[ -t 1 ]] && piped=0 || piped=1
@@ -33,23 +37,26 @@ out() {
       s/✔/Success:/g;
     ')
   fi
-  printf '%b\n' "$message";
+  printf '%b\n' "$message"
 }
-die() { out "$@"; exit 1; } >&2
+die() {
+  out "$@"
+  exit 1
+} >&2
 
 err() {
   if [[ "$rawoutput" == true ]]; then
     out "$@"
   else
-    out " \033[1;31m✖\033[0m  $@";
+    out " \033[1;31m✖\033[0m  $@"
   fi
 } >&2
 
-success() { 
+success() {
   if [[ "$rawoutput" == true ]]; then
     out "$@"
   else
-    out " \033[1;32m✔\033[0m  $@";
+    out " \033[1;32m✔\033[0m  $@"
   fi
 }
 
@@ -84,7 +91,7 @@ check_dependencies() {
 # Print usage
 usage() {
   banner
-  echo "$(basename $0) [OPTION]...
+  echo "$(basename "$0") [OPTION]...
 
  Corona Virus (Covid-19) statistics cli.
 
@@ -105,7 +112,7 @@ usage() {
 }
 
 banner() {
-    if [[ "$nobanner" != true ]]; then
+  if [[ "$nobanner" != true ]]; then
     echo "
 ${green}_________             .__    ._______ ________          _________ .____    .___ 
 \_   ___ \  _______  _|__| __| _/_   /   __   \         \_   ___ \|    |   |   |
@@ -114,12 +121,17 @@ ${yellow}/    \  \/ /  _ \  \/ /  |/ __ | |   \____    /  ______ /    \  \/|    
  ${red}\______  /\____/ \_/ |__\____ | |___| /____/            \______  /_______ \___|
         \/                    \/                                \/        \/        
 "
-printf "${no_color}"
-    fi
+    printf "${no_color}"
+  fi
 }
 
-
-function join_by { local d=$1; shift; echo -n "$1"; shift; printf "%s" "${@/#/$d}"; }
+function join_by() {
+  local d=$1
+  shift
+  echo -n "$1"
+  shift
+  printf "%s" "${@/#/$d}"
+}
 
 set_raw_output() {
   bold=""
@@ -138,10 +150,10 @@ main() {
   fi
   check_dependencies
   banner
-  if [[ -n "$country"  && "$list_all" == 1 ]]; then
+  if [[ -n "$country" && "$list_all" == 1 ]]; then
     err "--country (-c) and --list-all (-l) cannot be mixed together"
     die
-  fi;
+  fi
 
   if [ "$list_all" == 1 ]; then
     # The part can be re-factored in better way...
@@ -159,18 +171,18 @@ main() {
     cnt=0
     _start=1
     _end=$(echo "${result}" | jq -r 'length')
-    ((_end=_end-1))
+    ((_end = _end - 1))
     for row in $(echo "${result}" | jq -r '.[] | @base64'); do
       ProgressBar ${cnt} ${_end}
       plainRow=$(echo "${row}" | base64 --decode)
       line=()
       for k in "${cols[@]}"; do
-        val=$(echo $plainRow | jq -r ".${k}")
+        val=$(echo "$plainRow" | jq -r ".${k}")
         line+=("$val")
       done
       line=$(join_by , "${line[@]}")
       lines+=("$line")
-      ((cnt=cnt+1))
+      ((cnt = cnt + 1))
     done
     resultStr=$(join_by "\n" "${lines[@]}")
     echo ""
@@ -185,70 +197,70 @@ main() {
     for row in $(echo "${result}" | jq -r '.[] | @base64'); do
       plainRow=$(echo "${row}" | base64 --decode)
       #echo $plainRow | jq '. | "\(.country)-\(.province)"'
-      country=$(echo $plainRow | jq -r ".country")
-      province=$(echo $plainRow | jq -r ".province")
-      
+      country=$(echo "$plainRow" | jq -r ".country")
+      province=$(echo "$plainRow" | jq -r ".province")
+
       printf "${bold}${country}"
       if [ "$province" != "null" ]; then
         printf " (${province})"
-      fi 
+      fi
       printf "${no_color}\n"
 
-      casesHistorical=$(echo $plainRow | jq -r '.timeline .cases | map(.|tostring) | join(",")')
-      deathsHistorical=$(echo $plainRow | jq -r '.timeline .deaths | map(.|tostring) | join(",")')
+      casesHistorical=$(echo "$plainRow" | jq -r '.timeline .cases | map(.|tostring) | join(",")')
+      deathsHistorical=$(echo "$plainRow" | jq -r '.timeline .deaths | map(.|tostring) | join(",")')
 
-      printf "${bold}Cases:\t\t${yellow}$(spark ${casesHistorical})${no_color}\n"
-      printf "${bold}Deaths:\t\t${red}$(spark ${deathsHistorical})${no_color}\n"
+      printf "${bold}Cases:\t\t${yellow}$(spark "${casesHistorical}")${no_color}\n"
+      printf "${bold}Deaths:\t\t${red}$(spark "${deathsHistorical}")${no_color}\n"
 
       printf "\n"
     done
 
+  elif
 
-
-  elif [[ -n "$country" &&  !"$historical_all" ]]; then
+    [[ -n "$country" && ! "$historical_all" ]]
+  then
     success "Country: $country"
-    result=$(curl -s $API_ALL_COUNTRIES_ENDPOINT/$country)
-    historicalResult=$(curl -s $API_HISTORICAL_COUNTRIES_ENDPOINT/$country)
+    result=$(curl -s "$API_ALL_COUNTRIES_ENDPOINT"/"$country")
+    historicalResult=$(curl -s "$API_HISTORICAL_COUNTRIES_ENDPOINT"/"$country")
 
-    cases=$(echo $result | jq ".cases")
-    deaths=$(echo $result | jq ".deaths")
-    recovered=$(echo $result | jq ".recovered")
+    cases=$(echo "$result" | jq ".cases")
+    deaths=$(echo "$result" | jq ".deaths")
+    recovered=$(echo "$result" | jq ".recovered")
 
-    todayCases=$(echo $result | jq ".todayCases")
-    todayDeaths=$(echo $result | jq ".todayDeaths")
-    active=$(echo $result | jq ".active")
-    critical=$(echo $result | jq ".critical")
-    casesPerOneMillion=$(echo $result | jq ".casesPerOneMillion")
-    deathsPerOneMillion=$(echo $result | jq ".deathsPerOneMillion")
+    todayCases=$(echo "$result" | jq ".todayCases")
+    todayDeaths=$(echo "$result" | jq ".todayDeaths")
+    active=$(echo "$result" | jq ".active")
+    critical=$(echo "$result" | jq ".critical")
+    casesPerOneMillion=$(echo "$result" | jq ".casesPerOneMillion")
+    deathsPerOneMillion=$(echo "$result" | jq ".deathsPerOneMillion")
 
-    casesHistorical=$(echo $historicalResult | jq -r '.timeline .cases | map(.|tostring) | join(",")')
-    deathsHistorical=$(echo $historicalResult | jq -r '.timeline .deaths | map(.|tostring) | join(",")')
+    casesHistorical=$(echo "$historicalResult" | jq -r '.timeline .cases | map(.|tostring) | join(",")')
+    deathsHistorical=$(echo "$historicalResult" | jq -r '.timeline .deaths | map(.|tostring) | join(",")')
 
     printf "\n"
-    printf "${bold}Cases:\t\t\t${normal}${yellow}%'.f\t$(spark ${casesHistorical})${no_color}\n" ${cases}
-    printf "${bold}Deaths:\t\t\t${normal}${red}%'.f\t$(spark ${deathsHistorical})${no_color}\n" ${deaths}
-    printf "${bold}Recovered:\t\t${normal}${green}%'.f${no_color}\n" ${recovered}
-    printf "${bold}Active:\t\t\t${normal}%'.f\n" ${active}
-    printf "${bold}Critical:\t\t${normal}%'.f\n" ${critical}
-    printf "${bold}Today Cases:\t\t${normal}%'.f\n" ${todayCases}
-    printf "${bold}Today Deaths:\t\t${normal}%'.f\n" ${todayDeaths}
-    printf "${bold}Cases / Million:\t${normal}%'.f\n" ${casesPerOneMillion}
-    printf "${bold}Deaths / Million:\t${normal}%'.f\n" ${deathsPerOneMillion}
-
+    printf "${bold}Cases:\t\t\t${normal}${yellow}%'.f\t$(spark "${casesHistorical}")${no_color}\n" "${cases}"
+    printf "${bold}Deaths:\t\t\t${normal}${red}%'.f\t$(spark "${deathsHistorical}")${no_color}\n" "${deaths}"
+    printf "${bold}Recovered:\t\t${normal}${green}%'.f${no_color}\n" "${recovered}"
+    printf "${bold}Active:\t\t\t${normal}%'.f\n" "${active}"
+    printf "${bold}Critical:\t\t${normal}%'.f\n" "${critical}"
+    printf "${bold}Today Cases:\t\t${normal}%'.f\n" "${todayCases}"
+    printf "${bold}Today Deaths:\t\t${normal}%'.f\n" "${todayDeaths}"
+    printf "${bold}Cases / Million:\t${normal}%'.f\n" "${casesPerOneMillion}"
+    printf "${bold}Deaths / Million:\t${normal}%'.f\n" "${deathsPerOneMillion}"
 
   else
-    success "Global Statistics"
-    result=$(curl -s $API_TOTAL_ENDPOINT)
-    cases=$(echo $result | jq ".cases")
-    deaths=$(echo $result | jq ".deaths")
-    recovered=$(echo $result | jq ".recovered")
 
+    success "Global Statistics"
+    result=$(curl -s "$API_TOTAL_ENDPOINT")
+    cases=$(echo "$result" | jq ".cases")
+    deaths=$(echo "$result" | jq ".deaths")
+    recovered=$(echo "$result" | jq ".recovered")
 
     printf "\n"
-    printf "${bold}Cases:\t\t${normal}${yellow}%'.f${no_color}\n" ${cases}
-    printf "${bold}Deaths:\t\t${normal}${red}%'.f${no_color}\n" ${deaths}
-    printf "${bold}Recovered:\t${normal}${green}%'.f${no_color}\n" ${recovered}
-  fi;
+    printf "${bold}Cases:\t\t${normal}${yellow}%'.f${no_color}\n" "${cases}"
+    printf "${bold}Deaths:\t\t${normal}${red}%'.f${no_color}\n" "${deaths}"
+    printf "${bold}Recovered:\t${normal}${green}%'.f${no_color}\n" "${recovered}"
+  fi
 
 }
 
@@ -256,35 +268,34 @@ optstring=h
 unset options
 while (($#)); do
   case $1 in
-    # If option is of type -ab
-    -[!-]?*)
-      # Loop over each character starting with the second
-      for ((i=1; i < ${#1}; i++)); do
-        c=${1:i:1}
+  # If option is of type -ab
+  -[!-]?*)
+    # Loop over each character starting with the second
+    for ((i = 1; i < ${#1}; i++)); do
+      c=${1:i:1}
 
-        # Add current char to options
-        options+=("-$c")
+      # Add current char to options
+      options+=("-$c")
 
-        # If option takes a required argument, and it's not the last char make
-        # the rest of the string its argument
-        if [[ $optstring = *"$c:"* && ${1:i+1} ]]; then
-          options+=("${1:i+1}")
-          break
-        fi
-      done
-      ;;
-    # If option is of type --foo=bar
-    --?*=*) options+=("${1%%=*}" "${1#*=}") ;;
-    # add --endopts for --
-    --) options+=(--endopts) ;;
-    # Otherwise, nothing special
-    *) options+=("$1") ;;
+      # If option takes a required argument, and it's not the last char make
+      # the rest of the string its argument
+      if [[ $optstring = *"$c:"* && ${1:i+1} ]]; then
+        options+=("${1:i+1}")
+        break
+      fi
+    done
+    ;;
+  # If option is of type --foo=bar
+  --?*=*) options+=("${1%%=*}" "${1#*=}") ;;
+  # add --endopts for --
+  --) options+=(--endopts) ;;
+  # Otherwise, nothing special
+  *) options+=("$1") ;;
   esac
   shift
 done
 set -- "${options[@]}"
 unset options
-
 
 # A non-destructive exit for when the script exits naturally.
 safe_exit() {
@@ -294,16 +305,28 @@ safe_exit() {
 
 while [[ $1 = -?* ]]; do
   case $1 in
-    -n|--no-banner) nobanner=true;;
-    -r|--raw-output) rawoutput=true;;
-    -h|--help) usage >&2; safe_exit ;;
-    --version) out "$(basename $0) $version"; safe_exit ;;
-    -c|--country) country=$2; shift ;;
-    -l|--list-all) list_all=1 ;;
-    -s|--sort) sort_by=$2 ;;
-    -i|--historical) historical_all=1 ;;
-    --endopts) shift; break ;;
-    *) die "invalid option: $1" ;;
+  -n | --no-banner) nobanner=true ;;
+  -r | --raw-output) rawoutput=true ;;
+  -h | --help)
+    usage >&2
+    safe_exit
+    ;;
+  --version)
+    out "$(basename "$0") $version"
+    safe_exit
+    ;;
+  -c | --country)
+    country=$2
+    shift
+    ;;
+  -l | --list-all) list_all=1 ;;
+  -s | --sort) sort_by=$2 ;;
+  -i | --historical) historical_all=1 ;;
+  --endopts)
+    shift
+    break
+    ;;
+  *) die "invalid option: $1" ;;
   esac
   shift
 done
