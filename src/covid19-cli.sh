@@ -13,9 +13,7 @@ basedir=$(
   pwd
 )
 
-# shellcheck source=./defines.sh
-source "${basedir}"/defines.sh
-
+. "${basedir}"/defines.sh
 . "${basedir}"/libs/tables.sh
 . "${basedir}"/libs/progress.sh
 . "${basedir}"/libs/sparkline.sh

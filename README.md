@@ -26,7 +26,7 @@
 
 ## Usage
 
-Please download the "compiled" version from [Releases tab](https://github.com/garrylachman/covid19-cli/releases)
+Please download the "compiled" version from [Releases tab](https://github.com/Madic-/covid19-cli/releases)
 
 ```shell
 bash covid19-cli.sh -h
@@ -41,11 +41,11 @@ chmod +x covid19-cli.sh
 
 ## Build
 
-1. `git clone https://github.com/garrylachman/covid19-cli.git`
+1. `git clone https://github.com/Madic-/covid19-cli.git`
 2. `cd covid19-cli`
 3. `make`
 
-The compiled file is located at dist directory
+The compiled file is located in the dist directory.
 
 ## Screenshots
 
