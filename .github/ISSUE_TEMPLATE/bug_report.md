@@ -3,7 +3,7 @@ name: Bug report
 about: Create a report to help us improve
 title: ''
 labels: ''
-assignees: garrylachman
+assignees: Madic-
 
 ---
 
@@ -12,6 +12,7 @@ A clear and concise description of what the bug is.
 
 **To Reproduce**
 Steps to reproduce the behavior:
+
 1. Go to '...'
 2. Click on '....'
 3. Scroll down to '....'
@@ -23,10 +24,14 @@ A clear and concise description of what you expected to happen.
 **Screenshots**
 If applicable, add screenshots to help explain your problem.
 
-**Desktop:**
- - OS: [e.g. iOS]
+**Desktop**
+Which Operating system are you using
+
+- OS: [e.g. iOS]
 
 **Software versions**
+Describe the environment the script is running in.
+
 - Bash version: [e.g 3.2.57] ``bash --version``
 
 **Additional context**
